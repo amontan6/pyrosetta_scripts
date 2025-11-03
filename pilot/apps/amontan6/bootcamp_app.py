@@ -2,7 +2,7 @@ import sys
 import argparse
 from pyrosetta import *
 from pyrosetta.rosetta import numeric
-from pyrosetta.rosetta.protocols.moves import MonteCarlo
+from pyrosetta.rosetta.protocols.moves import AddPyMOLObserver, MonteCarlo
 from pyrosetta.rosetta.core.kinematics import MoveMap
 from pyrosetta.rosetta.core.optimization import MinimizerOptions, AtomTreeMinimizer
 from pyrosetta.rosetta.core.pack.task import TaskFactory
@@ -41,10 +41,10 @@ minimizer = AtomTreeMinimizer()
 
 minimizer.run(mypose, movemap, scorefxn, min_opts)
 
-the_observer = protocols.moves.PyMOLObserver(mypose, True, 0)
+the_observer = AddPyMOLObserver(mypose)
 the_observer.pymol().apply(mypose)
 
-for i in range(1):
+for i in range(10):
     n_res = mypose.total_residue()
     random_res = numeric.random.uniform()
     residue_index = int(random_res * n_res) + 1
