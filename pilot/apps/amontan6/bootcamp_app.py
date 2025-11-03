@@ -14,3 +14,7 @@ print(f"Filename: {args.filename}")
 mypose = pose_from_pdb(args.filename)
 
 print(f"Loaded pose with {mypose.total_residue()} residues from: {args.filename}")
+
+scorefxn = get_score_function(True)
+score = scorefxn(mypose)
+print(score)
