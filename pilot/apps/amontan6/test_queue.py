@@ -4,31 +4,42 @@ def test_first():
     print("Running my first unit tests!")
     assert True
 
+
 def test_enqueue(): #checking about adding an item to the end of the queue
     imaginary = Queue()
+    items = ["a","b"]
+    initial_length = len(imaginary._items)
+    
     for i in range(len(imaginary)):
-        if len(imaginary) - 1 == imaginary.enqueue():
-            assert True
+        imaginary.enqueue(items)
+        final_length = len(imaginary._items)
+        assert final_length > initial_length
 
-def test_enqueue2(): #checking about adding an item to the end of the queue
-    imaginary = Queue()
-    for i in range(len(imaginary)):
-        if imaginary[0] == imaginary.enqueue():
-            assert False
+#def test_enqueue2(): #checking about adding an item to the front of the queue
+#   imaginary = Queue()
+#   items = ["a","b"]
+#   imaginary.enqueue(items)
+#   first_index = items[0]
+#   assert imaginary._items[first_index] == items
 
 def test_dequeue():
     imaginary = Queue()
-    for i in range(len(imaginary)):
-        first_index = imaginary.pop(0) #pop removes and returns!!
-        if first_index == imaginary.dequeue():
-            assert True
+    items = ["a","b"]
+    initial_length = len(imaginary._items)
 
-def test_dequeue2():
-    imaginary = Queue()
     for i in range(len(imaginary)):
-        first_index = imaginary.pop(-1)
-        if first_index == imaginary.dequeue():
-            assert False
+        imaginary.dequeue(items)
+        final_length = len(imaginary._items)
+        assert final_length < initial_length
+
+#def test_dequeue2():
+#    imaginary = Queue()
+#    for i in range(len(imaginary)):
+#        first_index = imaginary.pop(-1)
+#        if first_index == imaginary.dequeue():
+#            assert False
+
+"""From here, I need to come back and redo these."""
 
 def test_size():
     imaginary = Queue()
