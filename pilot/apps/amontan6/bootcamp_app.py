@@ -7,7 +7,7 @@ from pyrosetta.rosetta.core.kinematics import MoveMap
 from pyrosetta.rosetta.core.optimization import MinimizerOptions, AtomTreeMinimizer
 from pyrosetta.rosetta.core.pack.task import TaskFactory
 from pyrosetta.rosetta.core.pack import pack_rotamers
-
+from dataclasses import dataclass
 
 init(extra_options="-ignore_unrecognized_res")
 
@@ -86,9 +86,32 @@ mypose.dump_pdb("out_best.pdb")
 print(f"Final score: {scorefxn(mypose)}")
 
 def identify_secondary_structure_spans(ss):
-    assert False, "TODO: function that takes a string representing the secondary structure and returns a list describing how many secondary structure elements were found, and who the first and last reisue of each element is"
-    elements []
-    return elements
+    blocks= []
+    start = None
+    current = None
+        
+    for i, ch in enumerate(ss, start=1):
+        if ch in ('E', 'H'):
+            if current is None:
+                current = ch
+                start = i
+            elif ch != current:
+                blocks.append((start, i -1))
+                current = ch
+                start = i
+        else:
+            if current is not None:
+                blocks.append((start, i-1))
+                current = None
+                start = None
+    if current is not None:
+        blocks.append((start, len(ss)))
+    
+    return blocks
+
+ss = "   EEEEE   HHHHHHHH  EEEEE   IGNOR EEEEEE   HHHHHHHHHHH  EEEEE  HHHH   "
+print(identify_secondary_structure_spans(ss))
+
 
 
 
