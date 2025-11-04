@@ -44,6 +44,9 @@ minimizer.run(mypose, movemap, scorefxn, min_opts)
 the_observer = AddPyMOLObserver(mypose)
 the_observer.pymol().apply(mypose)
 
+counter_true = 0
+counter_false = 0
+
 for i in range(10):
     n_res = mypose.total_residue()
     random_res = numeric.random.uniform()
@@ -62,12 +65,30 @@ for i in range(10):
     pack_rotamers(mypose, scorefxn, task)
 
     accepted = mc.boltzmann(mypose)
-    #print(accepted)
+
+    if accepted == True:
+        counter_true += 1
+    elif accepted == False:
+        counter_false += 1
+
+    if (i+1) % 10 == 0:
+        acceptance_rate = counter_true/10
+        print(f"Acceptance rate: {acceptance_rate}")
+        average_energy = mypose.energies().total_energy() / 10
+        print(f"Average energy: {average_energy}")
+
+print(f"Rejections: {counter_false}")
+print(f"Acceptances: {counter_true}")
 
 mc.recover_low(mypose)            # overwrite pose with best-so-far
 mypose.dump_pdb("out_best.pdb")
 
-print(scorefxn(mypose))
+print(f"Final score: {scorefxn(mypose)}")
+
+def identify_secondary_structure_spans(ss):
+    assert False, "TODO: function that takes a string representing the secondary structure and returns a list describing how many secondary structure elements were found, and who the first and last reisue of each element is"
+    elements []
+    return elements
 
 
 
