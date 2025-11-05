@@ -3,10 +3,11 @@ import argparse
 from pyrosetta import *
 from pyrosetta.rosetta import numeric
 from pyrosetta.rosetta.protocols.moves import AddPyMOLObserver, MonteCarlo
-from pyrosetta.rosetta.core.kinematics import MoveMap
+from pyrosetta.rosetta.core.kinematics import MoveMap, FoldTree
 from pyrosetta.rosetta.core.optimization import MinimizerOptions, AtomTreeMinimizer
 from pyrosetta.rosetta.core.pack.task import TaskFactory
 from pyrosetta.rosetta.core.pack import pack_rotamers
+from pyrosetta.rosetta.core.scoring.dssp import Dssp
 from dataclasses import dataclass
 
 init(extra_options="-ignore_unrecognized_res")
@@ -112,6 +113,10 @@ def identify_secondary_structure_spans(ss):
 ss = "   EEEEE   HHHHHHHH  EEEEE   IGNOR EEEEEE   HHHHHHHHHHH  EEEEE  HHHH   "
 print(identify_secondary_structure_spans(ss))
 
+dssp = Dssp(mypose)
+dssp_calc = dssp.get_dssp_secstruct()
+#print(dssp_calc)
 
-
+def fold_tree_from_ss():
+    ft = FoldTree(dssp_calc)
 
