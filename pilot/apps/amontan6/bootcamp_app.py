@@ -86,37 +86,117 @@ mypose.dump_pdb("out_best.pdb")
 
 print(f"Final score: {scorefxn(mypose)}")
 
-def identify_secondary_structure_spans(ss):
-    blocks= []
-    start = None
-    current = None
-        
+#dssp = Dssp(mypose)
+#dssp_calc = dssp.get_dssp_secstruct()
+#print(dssp_calc)
+
+#ss = ""
+#print(identify_secondary_structure_spans(dssp_calc))
+
+def identify_secondary_structure_spans(ss: str):
+    """Contiguous runs of the SAME H or E (1-based inclusive spans)."""
+    blocks, start, current = [], None, None
     for i, ch in enumerate(ss, start=1):
         if ch in ('E', 'H'):
             if current is None:
-                current = ch
-                start = i
+                current, start = ch, i
             elif ch != current:
-                blocks.append((start, i -1))
-                current = ch
-                start = i
+                blocks.append((start, i - 1))
+                current, start = ch, i
         else:
             if current is not None:
-                blocks.append((start, i-1))
-                current = None
-                start = None
+                blocks.append((start, i - 1))
+                current, start = None, None
     if current is not None:
         blocks.append((start, len(ss)))
-    
     return blocks
 
-ss = "   EEEEE   HHHHHHHH  EEEEE   IGNOR EEEEEE   HHHHHHHHHHH  EEEEE  HHHH   "
-print(identify_secondary_structure_spans(ss))
+def _loops_from_sse(sse_blocks):
+    """Inter-SSE loops = non-H/E gaps between adjacent SSEs (no terminal loops)."""
+    loops = []
+    for i in range(len(sse_blocks) - 1):
+        a_end = sse_blocks[i][1]
+        b_beg = sse_blocks[i+1][0]
+        if b_beg - a_end > 1:
+            loops.append((a_end + 1, b_beg - 1))
+    return loops
 
-dssp = Dssp(mypose)
-dssp_calc = dssp.get_dssp_secstruct()
-#print(dssp_calc)
+def _mid(a: int, b: int) -> int:
+    """1-based floor midpoint."""
+    return (a + b) // 2
 
-def fold_tree_from_ss():
-    ft = FoldTree(dssp_calc)
 
+# ---------- core: build FoldTree from DSSP string (doc order) ----------
+def fold_tree_from_dssp_string(pose, ss: str) -> FoldTree:
+    """
+    Build a FoldTree in the exact document order:
+      root back, root forward,
+      then for k = 0..:  Jump(root→loop_k), loop back, loop fwd,
+                         Jump(root→sse_{k+1}), sse back, sse fwd
+    Special cases:
+      - root back goes to residue 1 (not just SSE start)
+      - last SSE forward goes to residue N (pose length)
+    """
+    if not ss:
+        raise ValueError("Empty secondary-structure string.")
+    if len(ss) != pose.total_residue():
+        raise ValueError(f"SS string length {len(ss)} != pose length {pose.total_residue()}")
+
+    N    = pose.total_residue()
+    sse  = identify_secondary_structure_spans(ss)   # H/E blocks (same-letter runs)
+    if not sse:
+        raise ValueError("No SSEs (H/E) found in DSSP string.")
+    loops = _loops_from_sse(sse)                    # non-H/E gaps between SSEs
+
+    sse_m  = [_mid(a, b) for (a, b) in sse]
+    loop_m = [_mid(a, b) for (a, b) in loops]
+    root   = sse_m[0]
+
+    ft = FoldTree()
+    jump_id = 1
+
+    # --- Root SSE peptides (back to 1, forward to end of SSE1) ---
+    a0, b0 = sse[0]; m0 = sse_m[0]
+    if m0 > 1:
+        ft.add_edge(m0, 1, -1)     # e.g., (7 → 1)
+    if m0 < b0:
+        ft.add_edge(m0, b0, -1)    # e.g., (7 → 10)
+
+    # --- Interleave rows: loop_k then SSE_{k+1} ---
+    rows = max(len(loops), len(sse) - 1)
+    for k in range(rows):
+        # loop_k: Jump, back, forward (if exists)
+        if k < len(loops):
+            lm = loop_m[k]; la, lb = loops[k]
+            ft.add_edge(root, lm, jump_id); jump_id += 1
+            if lm > la: ft.add_edge(lm, la, -1)
+            if lm < lb: ft.add_edge(lm, lb, -1)
+
+        # sse_{k+1}: Jump, back, forward (if exists)
+        if (k + 1) < len(sse):
+            sm = sse_m[k+1]; sa, sb = sse[k+1]
+            ft.add_edge(root, sm, jump_id); jump_id += 1
+            if sm > sa: ft.add_edge(sm, sa, -1)
+            # forward: last SSE goes all the way to N
+            forward_to = N if (k + 1) == (len(sse) - 1) else sb
+            if sm < forward_to: ft.add_edge(sm, forward_to, -1)
+
+    #root the tree at 'root' (order of edges is unchanged)
+    try:
+        ft.reorder(root)
+    except Exception:
+        pass
+
+    return ft
+
+
+# ---------- convenience: Pose → DSSP → FoldTree ----------
+def fold_tree_from_ss(pose) -> FoldTree:
+    """
+    Compute DSSP on the pose and return a FoldTree built from the DSSP string.
+    """
+    ss = Dssp(pose).get_dssp_secstruct()
+    return fold_tree_from_dssp_string(pose, ss)
+
+ft = fold_tree_from_ss(mypose)
+print(ft)
