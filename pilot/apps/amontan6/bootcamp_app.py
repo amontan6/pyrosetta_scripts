@@ -8,6 +8,8 @@ from pyrosetta.rosetta.core.optimization import MinimizerOptions, AtomTreeMinimi
 from pyrosetta.rosetta.core.pack.task import TaskFactory
 from pyrosetta.rosetta.core.pack import pack_rotamers
 from pyrosetta.rosetta.core.scoring.dssp import Dssp
+from pyrosetta.rosetta.core.scoring import linear_chainbreak
+from pyrosetta.rosetta.core.pose import correctly_add_cutpoint_variants
 from dataclasses import dataclass
 
 init(extra_options="-ignore_unrecognized_res")
@@ -200,3 +202,6 @@ def fold_tree_from_ss(pose) -> FoldTree:
 
 ft = fold_tree_from_ss(mypose)
 print(ft)
+
+scorefxn.set_weight(linear_chainbreak, 1.0)
+add_variants = correctly_add_cutpoint_variants(mypose)
