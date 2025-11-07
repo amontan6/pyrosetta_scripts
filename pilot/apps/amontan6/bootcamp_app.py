@@ -62,6 +62,11 @@ for i in range(10):
     mypose.set_phi(residue_index, orig_phi + phi_perturb)
     mypose.set_psi(residue_index, orig_psi + psi_perturb)
 
+    #here I need to add the closing of the break using CCDLoopClosureMover
+    #my_loop = protocols.loops.Loop(start, end, cutpoint)
+    #my_loops = protocols.loops.Loops
+    #my_loops.add_loop(my_loop)
+
     tf = TaskFactory()
     task = tf.create_task_and_apply_taskoperations(mypose)
     task.restrict_to_repacking()
