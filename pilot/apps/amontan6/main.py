@@ -1,14 +1,8 @@
-# Embedded RosettaScripts XML:
-from pyrosetta import init, pose_from_pdb
+from pyrosetta import *
+from pyrosetta.rosetta.protocols.moves import MoverFactory
 from pyrosetta.rosetta.protocols.rosetta_scripts import XmlObjects
-from register_mover import register
-
-# 1) Register before init so factory knows your mover at startup.
-register()
-init()
-
-# 2) Read input pose
-pose = pose_from_pdb("input.pdb")
+from bootcamp_mover import BootCampMover
+from register_mover import BootCampMoverCreator
 
 EMBEDDED_XML = """
 <ROSETTASCRIPTS>
@@ -16,16 +10,24 @@ EMBEDDED_XML = """
     <ScoreFunction name="sfxn" weights="ref2015"/>
   </SCOREFXNS>
   <MOVERS>
+    <BootCampMover name="bcm" scorefxn="sfxn" num_iterations="100"/>
   </MOVERS>
-    <BootCampMover, name="bcm" num_iterations="" scorefxn="sfxn"/>
   <PROTOCOLS>
-    <Add filter_name="bcm"/>
+    <Add mover_name="bcm"/>
   </PROTOCOLS>
 </ROSETTASCRIPTS>
 """
+def main():
+    BootCampMoverCreator.register()
+    init()
+    pose = pose_from_pdb("1UBQ.pdb")
+    
+    xmlobj = XmlObjects.create_from_string(EMBEDDED_XML)
+    protocol = xmlobj.get_mover("ParsedProtocol")
+    protocol.apply(pose)
 
-xmlobj = XmlObjects.create_from_string(EMBEDDED_XML)
-protocol = xmlobj.get_mover("ParsedProtocol")
-protocol.apply(pose)
+    pose.dump_pdb("refined_output.pdb")
+    print(" Finished! Output written to refined_output.pdb")
 
-pose.dump_pdb("bootcamp_out.pdb")
+if __name__ == "__main__":
+    main()

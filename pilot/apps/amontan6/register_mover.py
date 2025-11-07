@@ -3,6 +3,7 @@ from bootcamp_mover import BootCampMover
 
 class BootCampMoverCreator(protocols.moves.MoverCreator):
     _instances = list()
+    _py_mover_creators_ = []
 
     def __init__(self):
         protocols.moves.MoverCreator.__init__(self)
@@ -19,11 +20,10 @@ class BootCampMoverCreator(protocols.moves.MoverCreator):
         print("creator provide_xml_schema is called")
         BootCampMover.provide_xml_schema(xsd)
 
-    _py_mover_creators = []
-
+    @staticmethod
     def register():
         factory = protocols.moves.MoverFactory.get_instance()
         creator = BootCampMoverCreator()
         factory.factory_register(creator)
 
-        _py_mover_creators_.append(creator)
+        BootCampMoverCreator._py_mover_creators_.append(creator)
